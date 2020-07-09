@@ -17,3 +17,5 @@ def grammar(a):
     print("list[0:2]: ", list[0:2])
 
     return a
+
+grammar(5)

@@ -1,23 +1,15 @@
 # !/usr/bin/python3
 
 import tensorflow as tf
+from tensorflow import keras
 import numpy as np
 import os
-
-
-# import PythonTest as pt
-# import TensorflowTest as tt
-# import LinearRegression as lr
+import LinearRegression as lr
 import NeuralNetwork as nn
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-# print(pt.grammar(5))
-# tt.tensorflow(2,3)
-nn.train()
-
-'''
-def train():
+def LRtrain():
     data = []
     for i in range(100):
         x = np.random.uniform(-10., 10.)
@@ -30,5 +22,13 @@ def train():
     data = np.array(data)
     lr.train(data)
     return None
-train()
-'''
+
+def NNtrain():
+    dataset_path = keras.utils.get_file("auto-mpg.data", "http://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data")
+    print("csv文件存储在：",dataset_path)
+    nn.train(dataset_path)
+
+
+# LRtrain()
+# NNtrain()
+
