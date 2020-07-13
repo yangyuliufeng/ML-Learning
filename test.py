@@ -35,7 +35,6 @@ def NNtrain():
     # 文件路径，列名列表，用于替换NA/NaN的值，分隔符，是否忽略分隔符后的空白
     dataset = pd.read_csv(dataset_path, names=column_names, na_values="?", comment='\t', sep=" ", skipinitialspace=True)
     nn.train(dataset)
-##
 
 # LRtrain()
 NNtrain()
