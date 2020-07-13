@@ -1,11 +1,15 @@
 # !/usr/bin/python3
 
-import tensorflow as tf
-from tensorflow import keras
+import keras
+from keras import layers, Sequential
 import numpy as np
+import pandas as pd
 import os
+import tensorflow as tf
+
 import LinearRegression as lr
 import NeuralNetwork as nn
+
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -26,9 +30,14 @@ def LRtrain():
 def NNtrain():
     dataset_path = keras.utils.get_file("auto-mpg.data", "http://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data")
     print("csv文件存储在：",dataset_path)
-    nn.train(dataset_path)
+    # 效能（每加仑能开多少公里），气缸数，排量，马力，重量， 加速度，型号年份，产地
+    column_names = ['MPG', 'Cylinders', 'Displacement', 'Horsepower', 'Weight', 'Acceleration', 'Model Year', 'Origin']
+    # 文件路径，列名列表，用于替换NA/NaN的值，分隔符，是否忽略分隔符后的空白
+    dataset = pd.read_csv(dataset_path, names=column_names, na_values="?", comment='\t', sep=" ", skipinitialspace=True)
+    nn.train(dataset)
 
 
 # LRtrain()
-# NNtrain()
+NNtrain()
+
 

@@ -1,18 +1,14 @@
 # !/usr/bin/python3
 
 import matplotlib.pyplot as plt
-import pandas as pd
 import seaborn as sns
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import layers, losses
 
-def train(dataset_path):
-    # 效能（每加仑能开多少公里），气缸数，排量，马力，重量， 加速度，型号年份，产地
-    column_names = ['MPG', 'Cylinders', 'Displacement', 'Horsepower', 'Weight', 'Acceleration', 'Model Year', 'Origin']
-    # 文件路径，列名列表，用于替换NA/NaN的值，分隔符，是否忽略分隔符后的空白
-    dataset = pd.read_csv(dataset_path, names=column_names, na_values="?", comment='\t', sep=" ", skipinitialspace=True)
+def train(raw_dataset):
 
+    dataset= raw_dataset.copy()
     # 清除空白数据
     dataset = dataset.dropna()
 
@@ -26,15 +22,16 @@ def train(dataset_path):
     train_dataset = dataset.sample(frac=0.8, random_state=0)
     test_dataset = dataset.drop(train_dataset.index)
 
-    # ???
+    # 展现气缸、排量、马力、重量四个变量两两间的关系
     sns.pairplot(train_dataset[["Cylinders", "Displacement", "Weight", "MPG"]], diag_kind="kde")
 
     # 查看训练集的输入X的统计数据
     train_stats = train_dataset.describe()
+    # 移除MPG字段
     train_stats.pop("MPG")
     # 旋转矩阵
     train_stats = train_stats.transpose()
-
+    
     # 将MPG字段移出为标签数据：
     train_labels = train_dataset.pop('MPG')
     test_labels = test_dataset.pop('MPG')
@@ -46,10 +43,12 @@ def train(dataset_path):
     normed_train_data = norm(train_dataset)
     normed_test_data = norm(test_dataset)
 
-    # 构建Dataset对象
+    # 构建tf Dataset对象
     train_db = tf.data.Dataset.from_tensor_slices((normed_train_data.values, train_labels.values))
-    # 随机打散，批量化
     train_db = train_db.shuffle(100).batch(32)
+
+    test_db = tf.data.Dataset.from_tensor_slices((normed_test_data.values, test_labels.values))
+    test_db = test_db.shuffle(100).batch(32)
 
     # 自定义网络类，继承自keras.Model基类
     class Network(keras.Model):
@@ -72,41 +71,47 @@ def train(dataset_path):
     model = Network()
     # 通过build函数完成内部张量的创建，其中4为任意设置的batch数量，9为输入特征长度
     model.build(input_shape=(None, 9))
-    print(model.summary())
+
     # 创建优化器，指定学习率
     optimizer = tf.keras.optimizers.RMSprop(0.001)
-
-    # # 未训练时测试
-    # example_batch = normed_train_data[:10]
-    # example_result = model.predict(example_batch)
-    # example_result
 
     train_mae_losses = []
     test_mae_losses = []
 
     for epoch in range(200):
         for step, (x, y) in enumerate(train_db):
+            # 一次训练32个数据
             with tf.GradientTape() as tape:
                 out = model(x)
                 # MSE：均方误差
-                loss = tf.reduce_mean(losses.MSE(y, out))
+                train_mse_loss = tf.reduce_mean(losses.MSE(y, out))
                 # MAE：平均绝对误差
-                mae_loss = tf.reduce_mean(losses.MAE(y, out))
-            grads = tape.gradient(loss, model.trainable_variables)
+                train_mae_loss = tf.reduce_mean(losses.MAE(y, out))
+            grads = tape.gradient(train_mse_loss, model.trainable_variables)
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        train_mae_losses.append(float(mae_loss))
+
+        train_mae_losses.append(float(train_mae_loss))
         out = model(tf.constant(normed_test_data.values))
-        test_mae_losses.append(tf.reduce_mean(losses.MAE(test_labels, out)))
+        test_mae_loss = tf.reduce_mean(losses.MAE(test_labels,out))
+        test_mae_losses.append(float(test_mae_loss))
 
     plt.figure()
     plt.xlabel('Epoch')
     plt.ylabel('MAE')
     plt.plot(train_mae_losses, label='Train')
     plt.plot(test_mae_losses, label='Test')
+    #设置坐标轴范围
+    plt.ylim([0, 200])
+    plt.ylim([0, 30])
+    #给图像加图例
     plt.legend()
 
-    # plt.ylim([0,10])
-    plt.legend()
     plt.savefig('auto.svg')
     plt.show()
+
+    x, y = next(iter(test_db))  # 加载一个batch的测试数据
+    print(x.shape)  # 打印当前batch的形状
+    out = model.predict(x)  # 模型预测，预测结果保存在out中
+    print(out)
+
     return None
