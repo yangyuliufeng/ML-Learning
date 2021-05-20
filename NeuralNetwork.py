@@ -1,14 +1,15 @@
 # !/usr/bin/python3
+from abc import ABC
 
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from tensorflow import keras
-from keras import layers, losses
+import keras
+from keras import layers, losses, engine, optimizers
 
-def train(train_dataset, test_dataset, test_normed_dataframe, test_labels_dataframe):
 
+def mpg_train(train_dataset, test_normed_dataframe, test_labels_dataframe):
     # 自定义网络类，继承自keras.Model基类
-    class Network(keras.Model):
+    class Network(engine.Model, ABC):
         # 初始化函数
         def __init__(self):
             super(Network, self).__init__()
@@ -66,9 +67,39 @@ def train(train_dataset, test_dataset, test_normed_dataframe, test_labels_datafr
     plt.savefig('auto.svg')
     plt.show()
 
-    x, y = next(iter(test_dataset))  # 加载一个batch的测试数据
-    print(x.shape)  # 打印当前batch的形状
-    out = model.predict(x)  # 模型预测，预测结果保存在out中
+    out = model.predict(test_normed_dataframe)  # 模型预测，预测结果保存在out中
     print(out)
 
     return None
+
+
+def mnist_train(x_train, y_train, x_test, y_test, input_shape, num_classes):
+    batch_size = 128
+    epochs = 2
+
+    model = keras.Sequential()
+    model.add(layers.Conv2D(32, kernel_size=(3, 3),
+                            activation='relu',
+                            input_shape=input_shape))
+    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
+    model.add(layers.Dropout(0.25))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(128, activation='relu'))
+    model.add(layers.Dropout(0.5))
+    model.add(layers.Dense(num_classes, activation='softmax'))
+
+    opt = optimizers.RMSprop(0.001)
+
+    model.compile(loss=losses.categorical_crossentropy,
+                  optimizer=opt,
+                  metrics=['accuracy'])
+
+    model.fit(x_train, y_train,
+              batch_size=batch_size,
+              epochs=epochs,
+              validation_data=(x_test, y_test))
+    score = model.evaluate(x_test, y_test)
+    print('Test loss:', score[0])
+    print('Test accuracy:', score[1])
+

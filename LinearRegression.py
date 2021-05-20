@@ -13,14 +13,15 @@ def train(data):
     print(f'Final loss:{loss}, w:{w}, b:{b}')
     return None
 
+
 # 计算最优解b、w上的均方差
 def mse(b, w, points):
-    totalError = 0
+    total_error = 0
     for i in range(0, len(points)):
         x = points[i, 0]
         y = points[i, 1]
-        totalError += (y - (w * x + b)) ** 2
-    return totalError / float(len(points))
+        total_error += (y - (w * x + b)) ** 2
+    return total_error / float(len(points))
 
 
 def step_gradient(b_current, w_current, points, lr):

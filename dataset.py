@@ -67,17 +67,14 @@ def auto_mpg():
     train_dataset = tf.data.Dataset.from_tensor_slices((train_normed_dataframe.values, train_labels_dataframe.values))
     train_dataset = train_dataset.shuffle(100).batch(32)
 
-    test_dataset = tf.data.Dataset.from_tensor_slices((test_normed_dataframe.values, test_labels_dataframe.values))
-    test_dataset = test_dataset.shuffle(100).batch(32)
-
-    return train_dataset, test_dataset, test_normed_dataframe, test_labels_dataframe
+    return train_dataset, test_normed_dataframe, test_labels_dataframe
 
 
 def mnist():
     num_classes = 10
-    # Input image dimensions
+    # 输入图片的长宽
     img_rows, img_cols = 28, 28
-    # The data, shuffled and split between train and test sets
+
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
     if keras.backend.image_data_format() == 'channels_first':
@@ -93,11 +90,12 @@ def mnist():
     x_test = x_test.astype('float32')
     x_train /= 255
     x_test /= 255
-    print('x_train shape:', x_train.shape)
+
+    # 类别标签转换为OneHot编码
+    y_train = keras.utils.to_categorical(y_train, num_classes)
+    y_test = keras.utils.to_categorical(y_test, num_classes)
+
     print(x_train.shape[0], 'train samples')
     print(x_test.shape[0], 'test samples')
 
-    # Convert class vectors to binary class matrices
-    y_train = keras.utils.to_categorical(y_train, num_classes)
-    y_test = keras.utils.to_categorical(y_test, num_classes)
-    return (x_train, y_train), (x_test, y_test)
+    return (x_train, y_train), (x_test, y_test), input_shape, num_classes
