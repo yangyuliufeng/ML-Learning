@@ -28,14 +28,14 @@ def step_gradient(b_current, w_current, points, lr):
     new_b = b_current
     new_w = w_current
     b_gradient = w_gradient = 0
-    M = float(len(points))
+    m = float(len(points))
     for i in range(0, len(points)):
         x = points[i, 0]
         y = points[i, 1]
         # 误差函数对b的导数grad_b = 2(wx+b-y)
-        b_gradient += (2 / M) * ((w_current * x + b_current) - y)
+        b_gradient += (2 / m) * ((w_current * x + b_current) - y)
         # 误差函数对w的导数grad_w = 2(wx+b-y)*x
-        w_gradient += (2 / M) * x * ((w_current * x + b_current) - y)
+        w_gradient += (2 / m) * x * ((w_current * x + b_current) - y)
         # 根据学习率lr更新b和w
         new_b = b_current - (lr * b_gradient)
         new_w = w_current - (lr * w_gradient)

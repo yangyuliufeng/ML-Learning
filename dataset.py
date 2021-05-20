@@ -4,6 +4,7 @@ import keras
 import pandas
 import tensorflow as tf
 import numpy
+import seaborn
 
 
 def random_linear():
@@ -14,7 +15,7 @@ def random_linear():
         eps = numpy.random.normal(0., 0.01)
         y = 1.477 * x + 0.089 + eps
         data.append([x, y])
-    # 数组不支持append，得到了完整的数据才能将列表 转为数组
+    # 数组不支持append，得到了完整的数据才能将列表转为数组
     data = numpy.array(data)
     return data
 
@@ -44,7 +45,7 @@ def auto_mpg():
     test_dataframe = dataframe.drop(train_dataframe.index)
 
     # 展现气缸、排量、马力、重量四个变量两两间的关系
-    # sns.pairplot(train_dataframe[["Cylinders", "Displacement", "Weight", "MPG"]], diag_kind="kde")
+    # seaborn.pairplot(train_dataframe[["Cylinders", "Displacement", "Weight", "MPG"]], diag_kind="kde")
 
     # 查看训练集的输入X的统计数据
     train_stats_dataframe = train_dataframe.describe()
@@ -71,8 +72,9 @@ def auto_mpg():
 
 
 def mnist():
+    # 标签的类别数
     num_classes = 10
-    # 输入图片的长宽
+    # 图片的长宽
     img_rows, img_cols = 28, 28
 
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()

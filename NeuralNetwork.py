@@ -4,12 +4,12 @@ from abc import ABC
 import matplotlib.pyplot as plt
 import tensorflow as tf
 import keras
-from keras import layers, losses, engine, optimizers
+from keras import layers, losses, optimizers, applications
 
 
 def mpg_train(train_dataset, test_normed_dataframe, test_labels_dataframe):
-    # 自定义网络类，继承自keras.Model基类
-    class Network(engine.Model, ABC):
+    # 自定义网络类，继承自keras.engine.Model基类
+    class Network(keras.Model, ABC):
         # 初始化函数
         def __init__(self):
             super(Network, self).__init__()
@@ -67,7 +67,7 @@ def mpg_train(train_dataset, test_normed_dataframe, test_labels_dataframe):
     plt.savefig('auto.svg')
     plt.show()
 
-    out = model.predict(test_normed_dataframe)  # 模型预测，预测结果保存在out中
+    out = model.predict(test_normed_dataframe)
     print(out)
 
     return None
@@ -103,3 +103,25 @@ def mnist_train(x_train, y_train, x_test, y_test, input_shape, num_classes):
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
+
+def resnet50_train():
+    resnet = applications.ResNet50(weights='imagenet', include_top=False)
+    x = tf.random.normal([4, 224, 224, 3])
+    out = resnet(x)
+    print(out.shape)
+
+    # 新建池化层降维，形状由[4,7,7,2048]变为[4,1,1,2048]，删减维度后变为[4,2048]
+    global_average_layer = layers.GlobalAveragePooling2D()
+    out = global_average_layer(out)
+    print(out.shape)
+
+    # 新建全连接层，设置输出节点数为100
+    # 输出层的输出为样本属于100类别的概率分布
+    fc = layers.Dense(100)
+    out = fc(out)
+    print(out.shape)
+
+    network = keras.Sequential([resnet, global_average_layer, fc])
+
+    out = network.predict(x)
+    print(out)
