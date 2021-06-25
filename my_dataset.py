@@ -22,7 +22,7 @@ def random_linear():
 
 def auto_mpg():
     file_name = "auto-mpg.data"
-    dataset_url = "http://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data"
+    dataset_url = "https://archive.ics.uci.edu/ml/machine-learning-databases/auto-mpg/auto-mpg.data"
     dataset_path = keras.utils.get_file(file_name, dataset_url)
     print("csv文件存储在：", dataset_path)
 
@@ -45,7 +45,9 @@ def auto_mpg():
     test_dataframe = dataframe.drop(train_dataframe.index)
 
     # 展现气缸、排量、马力、重量四个变量两两间的关系
-    # seaborn.pairplot(train_dataframe[["Cylinders", "Displacement", "Weight", "MPG"]], diag_kind="kde")
+    show = False
+    if show:
+        seaborn.pairplot(train_dataframe[["Cylinders", "Displacement", "Weight", "MPG"]], diag_kind="kde")
 
     # 查看训练集的输入X的统计数据
     train_stats_dataframe = train_dataframe.describe()
@@ -101,3 +103,7 @@ def mnist():
     print(x_test.shape[0], 'test samples')
 
     return (x_train, y_train), (x_test, y_test), input_shape, num_classes
+
+
+def synthetic_batch(batch_size):
+    return tf.random.normal([batch_size, 224, 224, 3])

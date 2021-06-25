@@ -48,7 +48,7 @@ else:
 
 # 学习率
 lr = 0.01
-# 从keras.applications中获取'ResNet50'熟悉
+# 从keras.applications中获取'ResNet50'属性
 model = getattr(applications, args.model)(weights=None)
 # 优化器
 opt = tf.optimizers.SGD(lr * hvd.size())

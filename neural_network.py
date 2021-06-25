@@ -45,7 +45,7 @@ def mpg_train(train_dataset, test_normed_dataframe, test_labels_dataframe):
                 train_mse_loss = tf.reduce_mean(losses.MSE(y, out))
             grads = tape.gradient(train_mse_loss, model.trainable_variables)
             optimizer.apply_gradients(zip(grads, model.trainable_variables))
-        # TODO: cal MAE with all data
+        # TODO: cal MAE with all data?
         # MAE：平均绝对误差
         train_mae_loss = tf.reduce_mean(losses.MAE(y, out))
         train_mae_losses.append(float(train_mae_loss))
@@ -78,9 +78,7 @@ def mnist_train(x_train, y_train, x_test, y_test, input_shape, num_classes):
     epochs = 2
 
     model = keras.Sequential()
-    model.add(layers.Conv2D(32, kernel_size=(3, 3),
-                            activation='relu',
-                            input_shape=input_shape))
+    model.add(layers.Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
     model.add(layers.Conv2D(64, (3, 3), activation='relu'))
     model.add(layers.MaxPooling2D(pool_size=(2, 2)))
     model.add(layers.Dropout(0.25))
@@ -91,9 +89,7 @@ def mnist_train(x_train, y_train, x_test, y_test, input_shape, num_classes):
 
     opt = optimizers.RMSprop(0.001)
 
-    model.compile(loss=losses.categorical_crossentropy,
-                  optimizer=opt,
-                  metrics=['accuracy'])
+    model.compile(loss=losses.categorical_crossentropy, optimizer=opt, metrics=['accuracy'])
 
     model.fit(x_train, y_train,
               batch_size=batch_size,
@@ -104,10 +100,10 @@ def mnist_train(x_train, y_train, x_test, y_test, input_shape, num_classes):
     print('Test accuracy:', score[1])
 
 
-def resnet50_train():
+def resnet50_train(x_batch):
     resnet = applications.ResNet50(weights='imagenet', include_top=False)
-    x = tf.random.normal([4, 224, 224, 3])
-    out = resnet(x)
+
+    out = resnet(x_batch)
     print(out.shape)
 
     # 新建池化层降维，形状由[4,7,7,2048]变为[4,1,1,2048]，删减维度后变为[4,2048]
@@ -123,5 +119,5 @@ def resnet50_train():
 
     network = keras.Sequential([resnet, global_average_layer, fc])
 
-    out = network.predict(x)
-    print(out)
+    out = network.predict(x_batch)
+    print(out.shape)
