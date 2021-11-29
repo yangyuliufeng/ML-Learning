@@ -1,10 +1,10 @@
-# !/usr/bin/python3
+import time
 from abc import ABC
 
 import matplotlib.pyplot as plt
 import tensorflow as tf
-import keras
-from keras import layers, losses, optimizers, applications
+from tensorflow import keras
+from tensorflow.keras import layers, losses, optimizers, applications
 
 
 def mpg_train(train_dataset, test_normed_dataframe, test_labels_dataframe):
@@ -18,12 +18,12 @@ def mpg_train(train_dataset, test_normed_dataframe, test_labels_dataframe):
             self.fc2 = layers.Dense(64, activation='relu')
             self.fc3 = layers.Dense(1)
 
-        def call(self, inputs, training=None, mask=None):
+        def call(self, inputs):
             # 依次通过3个全连接层
-            x = self.fc1(inputs)
-            x = self.fc2(x)
-            x = self.fc3(x)
-            return x
+            outputs = self.fc1(inputs)
+            outputs = self.fc2(outputs)
+            outputs = self.fc3(outputs)
+            return outputs
 
     # 创建网络类实例
     model = Network()
@@ -73,29 +73,29 @@ def mpg_train(train_dataset, test_normed_dataframe, test_labels_dataframe):
     return None
 
 
-def mnist_train(x_train, y_train, x_test, y_test, input_shape, num_classes):
-    batch_size = 128
-    epochs = 2
+def mnist_train(x_train, y_train, x_test, y_test, batch_size, epochs, num_classes):
+    input_shape = x_train.shape[1:4]
 
-    model = keras.Sequential()
-    model.add(layers.Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
-    model.add(layers.Conv2D(64, (3, 3), activation='relu'))
-    model.add(layers.MaxPooling2D(pool_size=(2, 2)))
-    model.add(layers.Dropout(0.25))
-    model.add(layers.Flatten())
-    model.add(layers.Dense(128, activation='relu'))
-    model.add(layers.Dropout(0.5))
-    model.add(layers.Dense(num_classes, activation='softmax'))
+    network = keras.Sequential()
+    network.add(layers.Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
+    network.add(layers.Conv2D(64, (3, 3), activation='relu'))
+    network.add(layers.MaxPooling2D(pool_size=(2, 2)))
+    network.add(layers.Dropout(0.25))
+    network.add(layers.Flatten())
+    network.add(layers.Dense(128, activation='relu'))
+    network.add(layers.Dropout(0.5))
+    network.add(layers.Dense(num_classes, activation='softmax'))
 
     opt = optimizers.RMSprop(0.001)
 
-    model.compile(loss=losses.categorical_crossentropy, optimizer=opt, metrics=['accuracy'])
+    network.compile(loss=losses.categorical_crossentropy, optimizer=opt, metrics=['accuracy'])
 
-    model.fit(x_train, y_train,
-              batch_size=batch_size,
-              epochs=epochs,
-              validation_data=(x_test, y_test))
-    score = model.evaluate(x_test, y_test)
+    network.fit(x_train, y_train,
+                batch_size=batch_size,
+                epochs=epochs,
+                validation_data=(x_test, y_test))
+
+    score = network.evaluate(x_test, y_test)
     print('Test loss:', score[0])
     print('Test accuracy:', score[1])
 
@@ -106,13 +106,12 @@ def resnet50_train(x_batch):
     out = resnet(x_batch)
     print(out.shape)
 
-    # 新建池化层降维，形状由[4,7,7,2048]变为[4,1,1,2048]，删减维度后变为[4,2048]
+    # 新建池化层降维，shape由[batch_size,7,7,2048]变为[batch_size,1,1,2048]，删减维度后变为[batch_size,2048]
     global_average_layer = layers.GlobalAveragePooling2D()
     out = global_average_layer(out)
     print(out.shape)
 
     # 新建全连接层，设置输出节点数为100
-    # 输出层的输出为样本属于100类别的概率分布
     fc = layers.Dense(100)
     out = fc(out)
     print(out.shape)
@@ -121,3 +120,42 @@ def resnet50_train(x_batch):
 
     out = network.predict(x_batch)
     print(out.shape)
+
+
+def benchmark(x_train, y_train, epochs):
+    # 从keras.applications中获取'ResNet50'属性
+    model = getattr(applications, 'ResNet50')(weights=None)
+    # 优化器
+    optimizer = tf.optimizers.SGD(0.01)
+
+    # 速度
+    sec_per_epoch = []
+    img_per_sec = []
+
+    batches_per_epoch = len(x_train)
+
+    def train_one_batch(batch, target):
+        with tf.GradientTape() as tape:
+            out = model(batch, training=True)
+            loss = tf.losses.sparse_categorical_crossentropy(target, out)
+        gradients = tape.gradient(loss, model.trainable_variables)
+        optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
+    for current_epoch in range(epochs):
+        time1 = time.time()
+        if current_epoch == 0:
+            print('Starting warmup...')
+        for current_iter in range(batches_per_epoch):
+            train_one_batch(x_train[current_iter - 1], y_train[current_iter - 1])
+
+        time2 = time.time()
+        time_cost = time2 - time1
+        sec_per_epoch.append(time_cost)
+        # 打印本epoch的耗时、速率
+        print('Epoch #%d: cost %.1f sec' % (current_epoch, time_cost))
+        print()
+
+
+        img_sec = x_train[0].shape[0] * batches_per_epoch / time_cost
+        print('Epoch #%d: %.1f img/sec' % (current_epoch, img_sec))
+        # img_per_sec.append(img_sec)

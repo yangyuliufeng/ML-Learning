@@ -1,6 +1,4 @@
-# !/usr/bin/python3
-
-import keras
+from tensorflow import keras
 import pandas
 import tensorflow as tf
 import numpy
@@ -73,22 +71,15 @@ def auto_mpg():
     return train_dataset, test_normed_dataframe, test_labels_dataframe
 
 
-def mnist():
-    # 标签的类别数
-    num_classes = 10
-    # 图片的长宽
-    img_rows, img_cols = 28, 28
-
+def mnist(num_classes):
     (x_train, y_train), (x_test, y_test) = keras.datasets.mnist.load_data()
 
     if keras.backend.image_data_format() == 'channels_first':
-        x_train = x_train.reshape(x_train.shape[0], 1, img_rows, img_cols)
-        x_test = x_test.reshape(x_test.shape[0], 1, img_rows, img_cols)
-        input_shape = (1, img_rows, img_cols)
+        x_train = x_train.reshape(x_train.shape[0], 1, x_train.shape[1], x_train.shape[2])
+        x_test = x_test.reshape(x_test.shape[0], 1, x_test.shape[1], x_test.shape[2])
     else:
-        x_train = x_train.reshape(x_train.shape[0], img_rows, img_cols, 1)
-        x_test = x_test.reshape(x_test.shape[0], img_rows, img_cols, 1)
-        input_shape = (img_rows, img_cols, 1)
+        x_train = x_train.reshape(x_train.shape[0], x_train.shape[1], x_train.shape[2], 1)
+        x_test = x_test.reshape(x_test.shape[0], x_train.shape[1], x_train.shape[2], 1)
 
     x_train = x_train.astype('float32')
     x_test = x_test.astype('float32')
@@ -102,8 +93,19 @@ def mnist():
     print(x_train.shape[0], 'train samples')
     print(x_test.shape[0], 'test samples')
 
-    return (x_train, y_train), (x_test, y_test), input_shape, num_classes
+    return (x_train, y_train), (x_test, y_test)
 
 
 def synthetic_batch(batch_size):
     return tf.random.normal([batch_size, 224, 224, 3])
+
+
+def synthetic_epoch(batch_size, batches_per_epoch):
+    x_train = []
+    y_train = []
+    for step in range(batches_per_epoch):
+        batch = synthetic_batch(batch_size)
+        target = tf.random.uniform([batch_size, 1], minval=0, maxval=999, dtype=tf.int64)
+        x_train.append(batch)
+        y_train.append(target)
+    return x_train, y_train
